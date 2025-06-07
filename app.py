@@ -47,6 +47,7 @@ def index():
                     flash(f"Error deleting: {str(e)}", "error")
             else:
                 flash("Please enter a file or folder name to delete.", "error")
+
         elif "upload_file" in request.form:
             file = request.files.get("file")
             folder_path = request.form.get("upload_path", "").strip()  # може бути пустим
@@ -59,26 +60,24 @@ def index():
 
                 try:
                     s3.upload_fileobj(file, S3_BUCKET, s3_key)
-                    flash(f"✅ File '{filename}' uploaded to '{s3_key}'", "success")
+                    flash(f"File '{filename}' uploaded to '{s3_key}'", "success")
                 except Exception as e:
                     flash(f"Error uploading file: {str(e)}", "error")
             else:
                 flash("Please select a file to upload.", "error")
-        if request.method == "POST":
-            # 1. Видалення файлу
+
+        elif "delete_key" in request.form:
             delete_key = request.form.get("delete_key")
             if delete_key:
                 try:
                     s3.delete_object(Bucket=S3_BUCKET, Key=delete_key)
-                    flash(f"✅ File '{delete_key}' deleted from bucket.", "success")
+                    flash(f"File '{delete_key}' deleted from bucket.", "success")
                 except Exception as e:
-                    flash(f"❌ Error deleting file: {str(e)}", "error")
-                return redirect(url_for("index"))
-        return redirect("/")
-    return render_template("index.html")
+                    flash(f"Error deleting file: {str(e)}", "error")
 
-@app.route("/files")
-def list_files():
+        return redirect(url_for("index"))
+
+    # GET запит: показати список файлів
     try:
         response = s3.list_objects_v2(Bucket=S3_BUCKET)
         files = []
